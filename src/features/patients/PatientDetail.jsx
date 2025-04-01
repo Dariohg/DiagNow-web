@@ -20,11 +20,6 @@ import {
     useToast,
     VStack,
     Badge,
-    Tabs,
-    TabList,
-    TabPanels,
-    Tab,
-    TabPanel,
     Table,
     Thead,
     Tbody,
@@ -68,11 +63,15 @@ const PatientDetail = () => {
     const fetchPatientData = async () => {
         try {
             setIsLoading(true);
+
+            // Obtener datos del paciente
             const patientResponse = await patientService.getPatientById(id);
             setPatient(patientResponse.data);
 
+            // Obtener recetas del paciente
             const prescriptionsResponse = await prescriptionService.getPatientPrescriptions(id);
             setPrescriptions(prescriptionsResponse.data || []);
+
         } catch (error) {
             console.error('Error fetching patient data:', error);
             toast({
@@ -124,8 +123,7 @@ const PatientDetail = () => {
                 setIsEditing(false);
                 fetchPatientData();
             } catch (error) {
-                const errorMessage =
-                    error.response?.data?.message || 'Error al actualizar el paciente';
+                const errorMessage = error.message || 'Error al actualizar el paciente';
 
                 toast({
                     title: 'Error',
@@ -247,147 +245,186 @@ const PatientDetail = () => {
                     </HStack>
                 </Flex>
 
-                <Tabs variant="enclosed" colorScheme="brand" bg="gray.800" borderRadius="lg" overflow="hidden">
-                    <TabList bg="gray.700">
-                        <Tab>Información Personal</Tab>
-                        <Tab>Historial de Recetas</Tab>
-                    </TabList>
+                {/* Información del paciente */}
+                <Card bg="gray.800" borderRadius="lg" boxShadow="md" mb={6}>
+                    <CardHeader borderBottomWidth="1px" borderColor="gray.700">
+                        <Heading size="md">Información Personal</Heading>
+                    </CardHeader>
+                    <CardBody>
+                        <Box as="form" onSubmit={formik.handleSubmit}>
+                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                                <FormControl isInvalid={formik.touched.name && formik.errors.name}>
+                                    <FormLabel>Nombre</FormLabel>
+                                    <Input
+                                        name="name"
+                                        value={formik.values.name}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        isReadOnly={!isEditing}
+                                        bg={isEditing ? undefined : "gray.700"}
+                                    />
+                                    <FormErrorMessage>{formik.errors.name}</FormErrorMessage>
+                                </FormControl>
 
-                    <TabPanels>
-                        <TabPanel>
-                            <Box as="form" onSubmit={formik.handleSubmit}>
-                                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                                    <FormControl isInvalid={formik.touched.name && formik.errors.name}>
-                                        <FormLabel>Nombre</FormLabel>
-                                        <Input
-                                            name="name"
-                                            value={formik.values.name}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                        />
-                                        <FormErrorMessage>{formik.errors.name}</FormErrorMessage>
-                                    </FormControl>
+                                <FormControl isInvalid={formik.touched.lastName && formik.errors.lastName}>
+                                    <FormLabel>Apellido</FormLabel>
+                                    <Input
+                                        name="lastName"
+                                        value={formik.values.lastName}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        isReadOnly={!isEditing}
+                                        bg={isEditing ? undefined : "gray.700"}
+                                    />
+                                    <FormErrorMessage>{formik.errors.lastName}</FormErrorMessage>
+                                </FormControl>
 
-                                    <FormControl isInvalid={formik.touched.lastName && formik.errors.lastName}>
-                                        <FormLabel>Apellido</FormLabel>
-                                        <Input
-                                            name="lastName"
-                                            value={formik.values.lastName}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                        />
-                                        <FormErrorMessage>{formik.errors.lastName}</FormErrorMessage>
-                                    </FormControl>
+                                <FormControl isInvalid={formik.touched.email && formik.errors.email}>
+                                    <FormLabel>Correo electrónico</FormLabel>
+                                    <Input
+                                        name="email"
+                                        type="email"
+                                        value={formik.values.email}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        isReadOnly={!isEditing}
+                                        bg={isEditing ? undefined : "gray.700"}
+                                    />
+                                    <FormErrorMessage>{formik.errors.email}</FormErrorMessage>
+                                </FormControl>
 
-                                    <FormControl isInvalid={formik.touched.email && formik.errors.email}>
-                                        <FormLabel>Correo electrónico</FormLabel>
-                                        <Input
-                                            name="email"
-                                            type="email"
-                                            value={formik.values.email}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                        />
-                                        <FormErrorMessage>{formik.errors.email}</FormErrorMessage>
-                                    </FormControl>
+                                <FormControl>
+                                    <FormLabel>Teléfono</FormLabel>
+                                    <Input
+                                        name="phone"
+                                        value={formik.values.phone}
+                                        onChange={formik.handleChange}
+                                        isReadOnly={!isEditing}
+                                        bg={isEditing ? undefined : "gray.700"}
+                                    />
+                                </FormControl>
 
-                                    <FormControl>
-                                        <FormLabel>Teléfono</FormLabel>
-                                        <Input
-                                            name="phone"
-                                            value={formik.values.phone}
-                                            onChange={formik.handleChange}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                        />
-                                    </FormControl>
+                                <FormControl>
+                                    <FormLabel>Fecha de nacimiento</FormLabel>
+                                    <Input
+                                        name="birthDate"
+                                        type="date"
+                                        value={formik.values.birthDate}
+                                        onChange={formik.handleChange}
+                                        isReadOnly={!isEditing}
+                                        bg={isEditing ? undefined : "gray.700"}
+                                    />
+                                </FormControl>
 
-                                    <FormControl>
-                                        <FormLabel>Fecha de nacimiento</FormLabel>
-                                        <Input
-                                            name="birthDate"
-                                            type="date"
-                                            value={formik.values.birthDate}
-                                            onChange={formik.handleChange}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                        />
-                                    </FormControl>
+                                <FormControl>
+                                    <FormLabel>Dirección</FormLabel>
+                                    <Input
+                                        name="address"
+                                        value={formik.values.address}
+                                        onChange={formik.handleChange}
+                                        isReadOnly={!isEditing}
+                                        bg={isEditing ? undefined : "gray.700"}
+                                    />
+                                </FormControl>
 
+                                {isEditing && (
                                     <FormControl>
                                         <FormLabel>Género</FormLabel>
-                                        {isEditing ? (
-                                            <Select
-                                                name="gender"
-                                                value={formik.values.gender}
-                                                onChange={formik.handleChange}
-                                            >
-                                                <option value="">Seleccionar</option>
-                                                <option value="masculino">Masculino</option>
-                                                <option value="femenino">Femenino</option>
-                                                <option value="otro">Otro</option>
-                                            </Select>
-                                        ) : (
-                                            <Input
-                                                value={formik.values.gender ?
-                                                    formik.values.gender.charAt(0).toUpperCase() + formik.values.gender.slice(1) :
-                                                    'No especificado'
-                                                }
-                                                isReadOnly
-                                                bg="gray.700"
-                                            />
-                                        )}
-                                    </FormControl>
-
-                                    <FormControl gridColumn={{ md: "span 2" }}>
-                                        <FormLabel>Dirección</FormLabel>
-                                        <Input
-                                            name="address"
-                                            value={formik.values.address}
+                                        <Select
+                                            name="gender"
+                                            value={formik.values.gender}
                                             onChange={formik.handleChange}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                        />
+                                        >
+                                            <option value="">Seleccionar</option>
+                                            <option value="masculino">Masculino</option>
+                                            <option value="femenino">Femenino</option>
+                                            <option value="otro">Otro</option>
+                                        </Select>
                                     </FormControl>
+                                )}
+                            </SimpleGrid>
+                        </Box>
+                    </CardBody>
+                </Card>
 
-                                    <FormControl gridColumn={{ md: "span 2" }}>
-                                        <FormLabel>Alergias</FormLabel>
-                                        <Textarea
-                                            name="allergies"
-                                            rows={2}
-                                            value={formik.values.allergies}
-                                            onChange={formik.handleChange}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                            placeholder={isEditing ? "Alergias conocidas" : "No se han registrado alergias"}
-                                        />
-                                    </FormControl>
-
-                                    <FormControl gridColumn={{ md: "span 2" }}>
-                                        <FormLabel>Notas médicas</FormLabel>
-                                        <Textarea
-                                            name="medicalNotes"
-                                            rows={4}
-                                            value={formik.values.medicalNotes}
-                                            onChange={formik.handleChange}
-                                            isReadOnly={!isEditing}
-                                            bg={isEditing ? undefined : "gray.700"}
-                                            placeholder={isEditing ? "Notas médicas relevantes" : "No hay notas médicas"}
-                                        />
-                                    </FormControl>
-                                </SimpleGrid>
+                {/* Recetas médicas */}
+                <Card bg="gray.800" borderRadius="lg" boxShadow="md">
+                    <CardHeader borderBottomWidth="1px" borderColor="gray.700">
+                        <Flex justify="space-between" align="center">
+                            <Heading size="md">Recetas Médicas</Heading>
+                            <Button
+                                as={RouterLink}
+                                to={`/prescriptions/new?patientId=${id}`}
+                                leftIcon={<FiPlus />}
+                                variant="primary"
+                                size="sm"
+                            >
+                                Nueva receta
+                            </Button>
+                        </Flex>
+                    </CardHeader>
+                    <CardBody>
+                        {prescriptions.length > 0 ? (
+                            <Box overflowX="auto">
+                                <Table variant="simple">
+                                    <Thead>
+                                        <Tr>
+                                            <Th>Fecha</Th>
+                                            <Th>Diagnóstico</Th>
+                                            <Th>Estado</Th>
+                                            <Th>Acciones</Th>
+                                        </Tr>
+                                    </Thead>
+                                    <Tbody>
+                                        {prescriptions.map((prescription) => (
+                                            <Tr key={prescription.id}>
+                                                <Td>{formatDate(prescription.date)}</Td>
+                                                <Td>
+                                                    <Text noOfLines={1}>{prescription.diagnosis}</Text>
+                                                </Td>
+                                                <Td>
+                                                    <Badge colorScheme="green">
+                                                        Activa
+                                                    </Badge>
+                                                </Td>
+                                                <Td>
+                                                    <HStack spacing={2}>
+                                                        <IconButton
+                                                            icon={<FiFileText />}
+                                                            aria-label="Ver receta"
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            as={RouterLink}
+                                                            to={`/prescriptions/${prescription.id}`}
+                                                        />
+                                                        <IconButton
+                                                            icon={<FiTrash2 />}
+                                                            aria-label="Eliminar receta"
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            colorScheme="red"
+                                                            onClick={() => {
+                                                                prescriptionService.deletePrescription(prescription.id)
+                                                                    .then(() => {
+                                                                        fetchPatientData();
+                                                                        toast({
+                                                                            title: 'Receta eliminada',
+                                                                            status: 'success',
+                                                                            duration: 3000,
+                                                                        });
+                                                                    });
+                                                            }}
+                                                        />
+                                                    </HStack>
+                                                </Td>
+                                            </Tr>
+                                        ))}
+                                    </Tbody>
+                                </Table>
                             </Box>
-                        </TabPanel>
-
-                        <TabPanel>
-                            <Flex justify="space-between" align="center" mb={4}>
-                                <Heading size="md">Recetas Médicas</Heading>
+                        ) : (
+                            <Box p={6} textAlign="center">
+                                <Text color="gray.400" mb={4}>No hay recetas médicas registradas para este paciente</Text>
                                 <Button
                                     as={RouterLink}
                                     to={`/prescriptions/new?patientId=${id}`}
@@ -395,66 +432,12 @@ const PatientDetail = () => {
                                     variant="primary"
                                     size="sm"
                                 >
-                                    Nueva receta
+                                    Crear receta
                                 </Button>
-                            </Flex>
-
-                            {prescriptions.length > 0 ? (
-                                <Box overflowX="auto">
-                                    <Table variant="simple">
-                                        <Thead>
-                                            <Tr>
-                                                <Th>Fecha</Th>
-                                                <Th>Diagnóstico</Th>
-                                                <Th>Medicamentos</Th>
-                                                <Th>Estado</Th>
-                                                <Th>Acciones</Th>
-                                            </Tr>
-                                        </Thead>
-                                        <Tbody>
-                                            {prescriptions.map((prescription) => (
-                                                <Tr key={prescription.id}>
-                                                    <Td>{formatDate(prescription.date)}</Td>
-                                                    <Td>
-                                                        <Text noOfLines={1}>{prescription.diagnosis}</Text>
-                                                    </Td>
-                                                    <Td>
-                                                        <Badge colorScheme="blue">
-                                                            {prescription.medications.length}
-                                                        </Badge>
-                                                    </Td>
-                                                    <Td>
-                                                        <Badge colorScheme="green">
-                                                            Activa
-                                                        </Badge>
-                                                    </Td>
-                                                    <Td>
-                                                        <HStack spacing={2}>
-                                                            <IconButton
-                                                                icon={<FiFileText />}
-                                                                aria-label="Ver receta"
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                as={RouterLink}
-                                                                to={`/prescriptions/${prescription.id}`}
-                                                            />
-                                                        </HStack>
-                                                    </Td>
-                                                </Tr>
-                                            ))}
-                                        </Tbody>
-                                    </Table>
-                                </Box>
-                            ) : (
-                                <Card bg="gray.700" p={4}>
-                                    <Text textAlign="center" py={6} color="gray.400">
-                                        No hay recetas médicas registradas para este paciente
-                                    </Text>
-                                </Card>
-                            )}
-                        </TabPanel>
-                    </TabPanels>
-                </Tabs>
+                            </Box>
+                        )}
+                    </CardBody>
+                </Card>
             </Box>
 
             {/* Confirm Delete Dialog */}

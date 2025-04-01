@@ -1,15 +1,75 @@
-// src/core/services/api.js
 import axios from 'axios';
-import { localStorageService } from './localStorage';
+
+// Prefijo para localStorage
+const PREFIX = 'diagnow_';
 
 // Configuración del entorno
-const isProduction = import.meta.env.PROD;
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const USE_LOCAL_STORAGE = import.meta.env.VITE_USE_LOCAL_STORAGE === 'true' || !isProduction;
+const isProduction = false; // Para pruebas locales
+const API_URL = 'http://localhost:8000/api';
+const USE_LOCAL_STORAGE = true; // Forzar almacenamiento local para pruebas
 
-// Inicializar datos demo si estamos en modo local
+// Función para generar IDs únicos
+const generateId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+};
+
+// Inicializar datos demo
+const initDemoData = () => {
+    // Verificar si ya existen datos
+    const existingPatients = localStorage.getItem(`${PREFIX}patients`);
+    if (!existingPatients) {
+        const demoPatients = [
+            { id: 'p1', name: 'Juan', lastName: 'Pérez', email: 'juan.perez@example.com', phone: '555-1234', birthDate: '1985-05-15' },
+            { id: 'p2', name: 'María', lastName: 'González', email: 'maria.gonzalez@example.com', phone: '555-5678', birthDate: '1990-10-20' },
+            { id: 'p3', name: 'Carlos', lastName: 'Rodríguez', email: 'carlos.rodriguez@example.com', phone: '555-9012', birthDate: '1978-03-08' },
+        ];
+        localStorage.setItem(`${PREFIX}patients`, JSON.stringify(demoPatients));
+    }
+
+    const existingPrescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+    if (!existingPrescriptions) {
+        const demoPrescriptions = [
+            {
+                id: 'rx1',
+                patientId: 'p1',
+                patientName: 'Juan Pérez',
+                date: '2025-03-29',
+                diagnosis: 'Gripe estacional',
+                status: 'active',
+                medications: [
+                    { name: 'Paracetamol', dosage: '500mg', frequency: '8', days: '5' }
+                ]
+            },
+            {
+                id: 'rx2',
+                patientId: 'p2',
+                patientName: 'María González',
+                date: '2025-03-28',
+                diagnosis: 'Hipertensión arterial',
+                status: 'active',
+                medications: [
+                    { name: 'Losartan', dosage: '50mg', frequency: '24', days: '30' }
+                ]
+            },
+            {
+                id: 'rx3',
+                patientId: 'p1',
+                patientName: 'Juan Pérez',
+                date: '2025-03-25',
+                diagnosis: 'Dolor lumbar',
+                status: 'active',
+                medications: [
+                    { name: 'Diclofenaco', dosage: '100mg', frequency: '12', days: '7' }
+                ]
+            }
+        ];
+        localStorage.setItem(`${PREFIX}prescriptions`, JSON.stringify(demoPrescriptions));
+    }
+};
+
+// Inicializar datos demo
 if (USE_LOCAL_STORAGE) {
-    localStorageService.initDemoData();
+    initDemoData();
 }
 
 // Configuración de Axios
@@ -23,28 +83,13 @@ const api = axios.create({
 // Interceptores de solicitud
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(`${PREFIX}token`);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },
     (error) => Promise.reject(error)
-);
-
-// Interceptores de respuesta
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        const { response } = error;
-
-        if (response && response.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-        }
-
-        return Promise.reject(error);
-    }
 );
 
 // Servicios de autenticación
@@ -60,21 +105,21 @@ export const authService = {
             };
 
             // Almacenar user (simulando un usuario registrado)
-            localStorageService.saveUser(newUser);
+            localStorage.setItem(`${PREFIX}user`, JSON.stringify(newUser));
 
             // Generar token simulado
             const token = `demo_token_${Date.now()}`;
-            localStorageService.saveToken(token);
+            localStorage.setItem(`${PREFIX}token`, token);
 
             // Delay simulado para imitar una petición real
             await new Promise(resolve => setTimeout(resolve, 600));
 
-            return Promise.resolve({
+            return {
                 data: {
                     user: newUser,
                     token: token
                 }
-            });
+            };
         }
 
         return api.post('/auth/register', userData);
@@ -82,43 +127,36 @@ export const authService = {
 
     login: async (credentials) => {
         if (USE_LOCAL_STORAGE) {
-            // En un caso real verificaríamos credenciales
-            // Aquí simplemente validamos que el email termine en @ejemplo.com para demo
-            if (!credentials.email.endsWith('@ejemplo.com') && !credentials.email.endsWith('@example.com')) {
-                return Promise.reject({
-                    response: {
-                        status: 401,
-                        data: { message: 'Credenciales inválidas' }
-                    }
-                });
-            }
-
+            // Para facilitar pruebas, aceptamos cualquier email y contraseña
             const user = {
                 id: 'demo_user',
                 name: 'Usuario',
                 lastName: 'Demo',
-                email: credentials.email
+                email: credentials.email || 'demo@example.com'
             };
 
-            // Guardar en local storage
-            localStorageService.saveUser(user);
+            // Guardar en local storage directamente
+            localStorage.setItem(`${PREFIX}user`, JSON.stringify(user));
             const token = `demo_token_${Date.now()}`;
-            localStorageService.saveToken(token);
+            localStorage.setItem(`${PREFIX}token`, token);
 
-            return Promise.resolve({
+            // Delay simulado
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            return {
                 data: {
                     user: user,
                     token: token
                 }
-            });
+            };
         }
 
         return api.post('/auth/login', credentials);
     },
 
     logout: () => {
-        localStorageService.removeToken();
-        localStorageService.removeUser();
+        localStorage.removeItem(`${PREFIX}token`);
+        localStorage.removeItem(`${PREFIX}user`);
     }
 };
 
@@ -126,8 +164,10 @@ export const authService = {
 export const patientService = {
     getPatients: async () => {
         if (USE_LOCAL_STORAGE) {
-            const patients = localStorageService.getPatients();
-            return Promise.resolve({ data: patients });
+            const patients = localStorage.getItem(`${PREFIX}patients`);
+            return {
+                data: patients ? JSON.parse(patients) : []
+            };
         }
 
         return api.get('/patients');
@@ -135,19 +175,15 @@ export const patientService = {
 
     getPatientById: async (id) => {
         if (USE_LOCAL_STORAGE) {
-            const patients = localStorageService.getPatients();
-            const patient = patients.find(p => p.id === id);
+            const patients = localStorage.getItem(`${PREFIX}patients`);
+            const parsedPatients = patients ? JSON.parse(patients) : [];
+            const patient = parsedPatients.find(p => p.id === id);
 
             if (!patient) {
-                return Promise.reject({
-                    response: {
-                        status: 404,
-                        data: { message: 'Paciente no encontrado' }
-                    }
-                });
+                throw new Error('Paciente no encontrado');
             }
 
-            return Promise.resolve({ data: patient });
+            return { data: patient };
         }
 
         return api.get(`/patients/${id}`);
@@ -155,8 +191,18 @@ export const patientService = {
 
     createPatient: async (patientData) => {
         if (USE_LOCAL_STORAGE) {
-            const newPatient = localStorageService.addPatient(patientData);
-            return Promise.resolve({ data: newPatient });
+            const patients = localStorage.getItem(`${PREFIX}patients`);
+            const parsedPatients = patients ? JSON.parse(patients) : [];
+
+            const newPatient = {
+                ...patientData,
+                id: generateId()
+            };
+
+            parsedPatients.push(newPatient);
+            localStorage.setItem(`${PREFIX}patients`, JSON.stringify(parsedPatients));
+
+            return { data: newPatient };
         }
 
         return api.post('/patients', patientData);
@@ -164,18 +210,23 @@ export const patientService = {
 
     updatePatient: async (id, patientData) => {
         if (USE_LOCAL_STORAGE) {
-            const updatedPatient = localStorageService.updatePatient(id, patientData);
+            const patients = localStorage.getItem(`${PREFIX}patients`);
+            const parsedPatients = patients ? JSON.parse(patients) : [];
 
-            if (!updatedPatient) {
-                return Promise.reject({
-                    response: {
-                        status: 404,
-                        data: { message: 'Paciente no encontrado' }
-                    }
-                });
+            const index = parsedPatients.findIndex(p => p.id === id);
+
+            if (index === -1) {
+                throw new Error('Paciente no encontrado');
             }
 
-            return Promise.resolve({ data: updatedPatient });
+            parsedPatients[index] = {
+                ...patientData,
+                id
+            };
+
+            localStorage.setItem(`${PREFIX}patients`, JSON.stringify(parsedPatients));
+
+            return { data: parsedPatients[index] };
         }
 
         return api.put(`/patients/${id}`, patientData);
@@ -183,8 +234,14 @@ export const patientService = {
 
     deletePatient: async (id) => {
         if (USE_LOCAL_STORAGE) {
-            localStorageService.deletePatient(id);
-            return Promise.resolve({ status: 200 });
+            const patients = localStorage.getItem(`${PREFIX}patients`);
+            const parsedPatients = patients ? JSON.parse(patients) : [];
+
+            const filteredPatients = parsedPatients.filter(p => p.id !== id);
+
+            localStorage.setItem(`${PREFIX}patients`, JSON.stringify(filteredPatients));
+
+            return { status: 200 };
         }
 
         return api.delete(`/patients/${id}`);
@@ -195,25 +252,34 @@ export const patientService = {
 export const prescriptionService = {
     createPrescription: async (prescriptionData) => {
         if (USE_LOCAL_STORAGE) {
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
+
             // Obtener detalles del paciente para nombre completo
             let patientName = prescriptionData.patientName;
 
             if (!patientName && prescriptionData.patientId) {
-                const patients = localStorageService.getPatients();
-                const patient = patients.find(p => p.id === prescriptionData.patientId);
+                const patients = localStorage.getItem(`${PREFIX}patients`);
+                const parsedPatients = patients ? JSON.parse(patients) : [];
+                const patient = parsedPatients.find(p => p.id === prescriptionData.patientId);
+
                 if (patient) {
                     patientName = `${patient.name} ${patient.lastName}`;
                 }
             }
 
-            const newPrescription = localStorageService.addPrescription({
+            const newPrescription = {
                 ...prescriptionData,
+                id: generateId(),
                 patientName,
                 status: 'active',
                 createdAt: new Date().toISOString()
-            });
+            };
 
-            return Promise.resolve({ data: newPrescription });
+            parsedPrescriptions.push(newPrescription);
+            localStorage.setItem(`${PREFIX}prescriptions`, JSON.stringify(parsedPrescriptions));
+
+            return { data: newPrescription };
         }
 
         return api.post('/prescriptions', prescriptionData);
@@ -221,8 +287,10 @@ export const prescriptionService = {
 
     getPrescriptions: async () => {
         if (USE_LOCAL_STORAGE) {
-            const prescriptions = localStorageService.getPrescriptions();
-            return Promise.resolve({ data: prescriptions });
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            return {
+                data: prescriptions ? JSON.parse(prescriptions) : []
+            };
         }
 
         return api.get('/prescriptions');
@@ -230,19 +298,16 @@ export const prescriptionService = {
 
     getPrescriptionById: async (id) => {
         if (USE_LOCAL_STORAGE) {
-            const prescriptions = localStorageService.getPrescriptions();
-            const prescription = prescriptions.find(p => p.id === id);
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
+
+            const prescription = parsedPrescriptions.find(p => p.id === id);
 
             if (!prescription) {
-                return Promise.reject({
-                    response: {
-                        status: 404,
-                        data: { message: 'Receta no encontrada' }
-                    }
-                });
+                throw new Error('Receta no encontrada');
             }
 
-            return Promise.resolve({ data: prescription });
+            return { data: prescription };
         }
 
         return api.get(`/prescriptions/${id}`);
@@ -250,8 +315,12 @@ export const prescriptionService = {
 
     getPatientPrescriptions: async (patientId) => {
         if (USE_LOCAL_STORAGE) {
-            const prescriptions = localStorageService.getPrescriptionsByPatient(patientId);
-            return Promise.resolve({ data: prescriptions });
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
+
+            const patientPrescriptions = parsedPrescriptions.filter(p => p.patientId === patientId);
+
+            return { data: patientPrescriptions };
         }
 
         return api.get(`/prescriptions/patient/${patientId}`);
@@ -259,28 +328,24 @@ export const prescriptionService = {
 
     updatePrescription: async (id, prescriptionData) => {
         if (USE_LOCAL_STORAGE) {
-            const prescriptions = localStorageService.getPrescriptions();
-            const index = prescriptions.findIndex(p => p.id === id);
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
+
+            const index = parsedPrescriptions.findIndex(p => p.id === id);
 
             if (index === -1) {
-                return Promise.reject({
-                    response: {
-                        status: 404,
-                        data: { message: 'Receta no encontrada' }
-                    }
-                });
+                throw new Error('Receta no encontrada');
             }
 
-            const updatedPrescription = {
-                ...prescriptions[index],
+            parsedPrescriptions[index] = {
+                ...parsedPrescriptions[index],
                 ...prescriptionData,
                 id
             };
 
-            prescriptions[index] = updatedPrescription;
-            localStorageService.savePrescriptions(prescriptions);
+            localStorage.setItem(`${PREFIX}prescriptions`, JSON.stringify(parsedPrescriptions));
 
-            return Promise.resolve({ data: updatedPrescription });
+            return { data: parsedPrescriptions[index] };
         }
 
         return api.put(`/prescriptions/${id}`, prescriptionData);
@@ -288,8 +353,14 @@ export const prescriptionService = {
 
     deletePrescription: async (id) => {
         if (USE_LOCAL_STORAGE) {
-            localStorageService.deletePrescription(id);
-            return Promise.resolve({ status: 200 });
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
+
+            const filteredPrescriptions = parsedPrescriptions.filter(p => p.id !== id);
+
+            localStorage.setItem(`${PREFIX}prescriptions`, JSON.stringify(filteredPrescriptions));
+
+            return { status: 200 };
         }
 
         return api.delete(`/prescriptions/${id}`);
