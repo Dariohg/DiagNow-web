@@ -2,17 +2,13 @@ import {
     Box,
     Flex,
     IconButton,
+    Button,
     HStack,
-    Menu,
-    MenuButton,
-    MenuList,
-    MenuItem,
     Text,
     Avatar,
-    Button,
     useBreakpointValue
 } from '@chakra-ui/react';
-import { FiMenu, FiBell, FiChevronDown } from 'react-icons/fi';
+import { FiMenu, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = ({ onOpen }) => {
@@ -51,40 +47,20 @@ const Navbar = ({ onOpen }) => {
                 </Text>
 
                 <HStack spacing={4}>
-                    <IconButton
-                        size="md"
+                    <Button
                         variant="ghost"
-                        aria-label="Notifications"
-                        icon={<FiBell />}
-                        color="gray.400"
-                    />
+                        leftIcon={<FiLogOut />}
+                        onClick={logout}
+                        size="sm"
+                    >
+                        Cerrar sesión
+                    </Button>
 
-                    <Menu>
-                        <MenuButton
-                            as={Button}
-                            variant="ghost"
-                            rightIcon={<FiChevronDown />}
-                            px={2}
-                        >
-                            <HStack>
-                                <Avatar
-                                    size="sm"
-                                    name={currentUser ? `${currentUser.name} ${currentUser.lastName}` : 'Doctor'}
-                                    bg="brand.500"
-                                />
-                                <Box display={{ base: 'none', md: 'block' }}>
-                                    <Text size="sm">{currentUser?.name} {currentUser?.lastName}</Text>
-                                </Box>
-                            </HStack>
-                        </MenuButton>
-                        <MenuList bg="gray.800" borderColor="gray.700">
-                            <MenuItem bg="gray.800" _hover={{ bg: 'gray.700' }}>Perfil</MenuItem>
-                            <MenuItem bg="gray.800" _hover={{ bg: 'gray.700' }}>Configuración</MenuItem>
-                            <MenuItem bg="gray.800" _hover={{ bg: 'gray.700' }} onClick={logout}>
-                                Cerrar sesión
-                            </MenuItem>
-                        </MenuList>
-                    </Menu>
+                    <Avatar
+                        size="sm"
+                        name={currentUser ? `${currentUser.name} ${currentUser.lastName}` : 'Doctor'}
+                        bg="brand.500"
+                    />
                 </HStack>
             </Flex>
         </Box>

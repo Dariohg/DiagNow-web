@@ -1,4 +1,4 @@
-// src/features/prescriptions/PrescriptionDetail.jsx
+
 import React, { useState, useEffect } from 'react';
 import {
     Box,
@@ -19,10 +19,6 @@ import {
     useToast,
     Spinner,
     Center,
-    Table,
-    Tbody,
-    Tr,
-    Td,
     AlertDialog,
     AlertDialogBody,
     AlertDialogFooter,
@@ -34,8 +30,8 @@ import {
 } from '@chakra-ui/react';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { FiArrowLeft, FiEdit, FiPrinter, FiTrash2, FiUser } from 'react-icons/fi';
-import { prescriptionService } from '../../core/services/api';
-import MainLayout from '../../shared/layout/MainLayout';
+import { prescriptionService } from '../../core/services/api.js';
+import MainLayout from '../../shared/layout/MainLayout.jsx';
 
 const PrescriptionDetail = () => {
     const { id } = useParams();
@@ -64,7 +60,7 @@ const PrescriptionDetail = () => {
                 duration: 5000,
                 isClosable: true,
             });
-            navigate('/prescriptions');
+            navigate('/dashboard');
         } finally {
             setIsLoading(false);
         }
@@ -82,8 +78,11 @@ const PrescriptionDetail = () => {
                 isClosable: true,
             });
 
-            navigate('/prescriptions');
-            // eslint-disable-next-line no-unused-vars
+            if (prescription && prescription.patientId) {
+                navigate(`/patients/${prescription.patientId}`);
+            } else {
+                navigate('/dashboard');
+            }
         } catch (error) {
             toast({
                 title: 'Error',
@@ -98,8 +97,6 @@ const PrescriptionDetail = () => {
     };
 
     const handlePrintPrescription = () => {
-        // Esta es una forma simple de imprimir, en una implementación real
-        // podríamos tener un componente específico para impresión o generar un PDF
         window.print();
     };
 
@@ -132,23 +129,29 @@ const PrescriptionDetail = () => {
                         <IconButton
                             icon={<FiArrowLeft />}
                             variant="ghost"
-                            onClick={() => navigate('/prescriptions')}
+                            onClick={() =>
+                                prescription && prescription.patientId
+                                    ? navigate(`/patients/${prescription.patientId}`)
+                                    : navigate('/dashboard')
+                            }
                             aria-label="Volver"
                         />
                         <Heading as="h1" size="lg">
-                            Detalle de Receta
+                            Receta médica
                         </Heading>
                     </HStack>
                     <HStack spacing={2}>
-                        <Tooltip label="Ver paciente">
-                            <IconButton
-                                as={RouterLink}
-                                to={`/patients/${prescription.patientId}`}
-                                icon={<FiUser />}
-                                variant="ghost"
-                                aria-label="Ver paciente"
-                            />
-                        </Tooltip>
+                        {prescription && prescription.patientId && (
+                            <Tooltip label="Ver paciente">
+                                <IconButton
+                                    as={RouterLink}
+                                    to={`/patients/${prescription.patientId}`}
+                                    icon={<FiUser />}
+                                    variant="ghost"
+                                    aria-label="Ver paciente"
+                                />
+                            </Tooltip>
+                        )}
                         <Button
                             leftIcon={<FiPrinter />}
                             variant="secondary"
@@ -191,13 +194,10 @@ const PrescriptionDetail = () => {
                     <CardBody>
                         <VStack spacing={6} align="stretch">
                             <Box>
-                                <Text fontWeight="bold" mb={2}>Información del Paciente:</Text>
-                                <Grid templateColumns="repeat(2, 1fr)" gap={4} bg="gray.700" p={4} borderRadius="md">
-                                    <GridItem>
-                                        <Text fontSize="sm" color="gray.400">Nombre:</Text>
-                                        <Text>{prescription.patientName}</Text>
-                                    </GridItem>
-                                </Grid>
+                                <Text fontWeight="bold" mb={2}>Paciente:</Text>
+                                <Box bg="gray.700" p={4} borderRadius="md">
+                                    <Text>{prescription.patientName}</Text>
+                                </Box>
                             </Box>
 
                             <Box>
@@ -210,25 +210,10 @@ const PrescriptionDetail = () => {
                             <Box>
                                 <Text fontWeight="bold" mb={2}>Medicamentos:</Text>
                                 <VStack spacing={4} align="stretch">
-                                    {prescription.medications.map((medication, index) => (
+                                    {prescription.medications && prescription.medications.map((medication, index) => (
                                         <Box key={index} bg="gray.700" p={4} borderRadius="md">
-                                            <Heading size="sm" mb={2}>{medication.name} - {medication.dosage}</Heading>
-                                            <Table variant="simple" size="sm">
-                                                <Tbody>
-                                                    <Tr>
-                                                        <Td fontWeight="bold" width="30%">Vía de administración:</Td>
-                                                        <Td>{medication.administrationRoute}</Td>
-                                                    </Tr>
-                                                    <Tr>
-                                                        <Td fontWeight="bold">Frecuencia:</Td>
-                                                        <Td>Cada {medication.frequency} horas</Td>
-                                                    </Tr>
-                                                    <Tr>
-                                                        <Td fontWeight="bold">Duración:</Td>
-                                                        <Td>{medication.days} días</Td>
-                                                    </Tr>
-                                                </Tbody>
-                                            </Table>
+                                            <Heading size="sm" mb={2}>{medication.name} {medication.dosage && `- ${medication.dosage}`}</Heading>
+                                            <Text>{medication.instructions || 'Sin instrucciones específicas'}</Text>
                                         </Box>
                                     ))}
                                 </VStack>
@@ -246,7 +231,7 @@ const PrescriptionDetail = () => {
                             <Divider my={6} />
 
                             <Box textAlign="center">
-                                <Text fontWeight="bold">Dr. Usuario Demo</Text>
+                                <Text fontWeight="bold">Dr. {localStorage.getItem('diagnow_user') ? JSON.parse(localStorage.getItem('diagnow_user')).name : 'Usuario'} {localStorage.getItem('diagnow_user') ? JSON.parse(localStorage.getItem('diagnow_user')).lastName : 'Demo'}</Text>
                                 <Text fontSize="sm" color="gray.400">Médico General</Text>
                                 <Text fontSize="sm" color="gray.400">Cédula Profesional: DEMO-12345</Text>
                             </Box>

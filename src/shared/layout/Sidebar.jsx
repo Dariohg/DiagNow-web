@@ -14,13 +14,11 @@ import {
     HStack,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import { FiHome, FiUsers, FiClipboard, FiPlusCircle } from 'react-icons/fi';
+import { FiHome, FiPlusCircle } from 'react-icons/fi';
 
 const SidebarContent = ({ onClose, ...rest }) => {
     const LinkItems = [
         { name: 'Dashboard', icon: FiHome, to: '/dashboard' },
-        { name: 'Pacientes', icon: FiUsers, to: '/patients' },
-        { name: 'Recetas', icon: FiClipboard, to: '/prescriptions' },
         { name: 'Nueva receta', icon: FiPlusCircle, to: '/prescriptions/new' },
     ];
 

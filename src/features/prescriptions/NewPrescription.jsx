@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+    import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -20,10 +20,6 @@ import {
     Divider,
     Text,
     SimpleGrid,
-    InputGroup,
-    InputRightAddon,
-    Grid,
-    GridItem,
     Badge,
     Spinner,
     Center,
@@ -32,11 +28,13 @@ import {
     NumberInputStepper,
     NumberIncrementStepper,
     NumberDecrementStepper,
+    Grid,
+    GridItem
 } from '@chakra-ui/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { FiPlus, FiTrash2, FiArrowLeft } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiArrowLeft, FiSave } from 'react-icons/fi';
 import { patientService, prescriptionService } from '../../core/services/api';
 import MainLayout from '../../shared/layout/MainLayout';
 
@@ -136,22 +134,21 @@ const NewPrescription = () => {
                 };
 
                 // En un entorno real, enviaríamos la receta al backend
-                // await prescriptionService.createPrescription(prescriptionData);
+                await prescriptionService.createPrescription(prescriptionData);
 
-                console.log('Prescription data to be sent:', prescriptionData);
+                toast({
+                    title: 'Receta creada',
+                    description: 'La receta ha sido creada exitosamente',
+                    status: 'success',
+                    duration: 3000,
+                    isClosable: true,
+                });
 
-                // Simulamos que la receta se guardó correctamente
-                setTimeout(() => {
-                    toast({
-                        title: 'Receta creada',
-                        description: 'La receta ha sido creada exitosamente',
-                        status: 'success',
-                        duration: 3000,
-                        isClosable: true,
-                    });
-
-                    navigate('/prescriptions');
-                }, 1000);
+                if (patientIdFromUrl) {
+                    navigate(`/patients/${patientIdFromUrl}`);
+                } else {
+                    navigate('/dashboard');
+                }
             } catch (error) {
                 console.error('Error creating prescription:', error);
                 toast({
@@ -230,7 +227,7 @@ const NewPrescription = () => {
                         <IconButton
                             icon={<FiArrowLeft />}
                             variant="ghost"
-                            onClick={() => navigate(-1)}
+                            onClick={() => patientIdFromUrl ? navigate(`/patients/${patientIdFromUrl}`) : navigate('/dashboard')}
                             aria-label="Volver"
                         />
                         <Heading as="h1" size="lg">
@@ -243,7 +240,7 @@ const NewPrescription = () => {
                     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} mb={6}>
                         <Card bg="gray.800" borderRadius="lg" boxShadow="md">
                             <CardHeader>
-                                <Heading size="md">Información del paciente</Heading>
+                                <Heading size="md">Información de la receta</Heading>
                             </CardHeader>
                             <CardBody>
                                 <VStack spacing={4} align="stretch">
@@ -255,6 +252,7 @@ const NewPrescription = () => {
                                             value={formik.values.patientId}
                                             onChange={handlePatientChange}
                                             onBlur={formik.handleBlur}
+                                            isDisabled={!!patientIdFromUrl}
                                         >
                                             {patients.map((patient) => (
                                                 <option key={patient.id} value={patient.id}>
@@ -383,8 +381,8 @@ const NewPrescription = () => {
                                                         <option value="oral">Oral</option>
                                                         <option value="intravenosa">Intravenosa</option>
                                                         <option value="intramuscular">Intramuscular</option>
-                                                        <option value="subcutanea">Subcutánea</option>
-                                                        <option value="topica">Tópica</option>
+                                                        <option value="subcutánea">Subcutánea</option>
+                                                        <option value="tópica">Tópica</option>
                                                         <option value="inhalada">Inhalada</option>
                                                         <option value="rectal">Rectal</option>
                                                     </Select>
@@ -427,12 +425,13 @@ const NewPrescription = () => {
 
                     <Flex justify="flex-end" mt={4}>
                         <HStack spacing={4}>
-                            <Button variant="ghost" onClick={() => navigate(-1)}>
+                            <Button variant="ghost" onClick={() => patientIdFromUrl ? navigate(`/patients/${patientIdFromUrl}`) : navigate('/dashboard')}>
                                 Cancelar
                             </Button>
                             <Button
                                 type="submit"
                                 variant="primary"
+                                leftIcon={<FiSave />}
                                 isLoading={isSaving}
                                 loadingText="Guardando..."
                             >

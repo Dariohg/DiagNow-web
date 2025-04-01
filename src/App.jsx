@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './shared/contexts/AuthContext';
@@ -11,12 +10,9 @@ import Register from './features/auth/Register';
 // Pages
 import Landing from './features/landing/Landing';
 import Dashboard from './features/patients/Dashboard';
-import PatientsList from './features/patients/PatientsList';
-import NewPatient from './features/patients/NewPatient';
 import PatientDetail from './features/patients/PatientDetail';
-import PrescriptionsList from './features/prescriptions/PrescriptionsList';
 import NewPrescription from './features/prescriptions/NewPrescription';
-import PrescriptionDetail from './features/prescriptions/PrescriptionsList.jsx';
+import PrescriptionDetail from './features/prescriptions/PrescriptionDetail.jsx';
 
 function App() {
     // Actualizar el título de la página
@@ -42,18 +38,10 @@ function App() {
                     }
                 />
                 <Route
-                    path="/patients"
+                    path="/patients/:id"
                     element={
                         <ProtectedRoute>
-                            <PatientsList />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/prescriptions"
-                    element={
-                        <ProtectedRoute>
-                            <PrescriptionsList />
+                            <PatientDetail />
                         </ProtectedRoute>
                     }
                 />
@@ -83,7 +71,7 @@ function App() {
                 />
 
                 {/* Fallback route */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
         </AuthProvider>
     );
