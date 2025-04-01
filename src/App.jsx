@@ -1,4 +1,5 @@
-import React from 'react';
+// src/App.jsx
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './shared/contexts/AuthContext';
 import ProtectedRoute from './shared/components/ProtectedRoute';
@@ -11,10 +12,18 @@ import Register from './features/auth/Register';
 import Landing from './features/landing/Landing';
 import Dashboard from './features/patients/Dashboard';
 import PatientsList from './features/patients/PatientsList';
+import NewPatient from './features/patients/NewPatient';
+import PatientDetail from './features/patients/PatientDetail';
 import PrescriptionsList from './features/prescriptions/PrescriptionsList';
 import NewPrescription from './features/prescriptions/NewPrescription';
+import PrescriptionDetail from './features/prescriptions/PrescriptionsList.jsx';
 
 function App() {
+    // Actualizar el título de la página
+    useEffect(() => {
+        document.title = 'DiagNow - Sistema de Gestión Médica';
+    }, []);
+
     return (
         <AuthProvider>
             <Routes>
@@ -50,6 +59,22 @@ function App() {
                 />
                 <Route
                     path="/prescriptions/new"
+                    element={
+                        <ProtectedRoute>
+                            <NewPrescription />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/prescriptions/:id"
+                    element={
+                        <ProtectedRoute>
+                            <PrescriptionDetail />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/prescriptions/edit/:id"
                     element={
                         <ProtectedRoute>
                             <NewPrescription />
