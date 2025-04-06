@@ -56,7 +56,7 @@ const Login = () => {
                     isClosable: true,
                 });
 
-                login(response.data.user, response.data.token);
+                login(response.data, response.data.token);
             } catch (error) {
                 const errorMessage =
                     error.response?.data?.message || 'Credenciales inválidas. Inténtalo de nuevo.';

@@ -4,9 +4,16 @@ import axios from 'axios';
 const PREFIX = 'diagnow_';
 
 // Configuración del entorno
-const isProduction = false; // Para pruebas locales
-const API_URL = 'http://localhost:8000/api';
-const USE_LOCAL_STORAGE = true; // Forzar almacenamiento local para pruebas
+const API_URL = 'https://diagnow-api.onrender.com';
+const USE_LOCAL_STORAGE = false;
+
+
+const api = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
 // Función para generar IDs únicos
 const generateId = () => {
@@ -72,15 +79,7 @@ if (USE_LOCAL_STORAGE) {
     initDemoData();
 }
 
-// Configuración de Axios
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
 
-// Interceptores de solicitud
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem(`${PREFIX}token`);
@@ -90,6 +89,19 @@ api.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+    response => response,
+    error => {
+        // Manejar errores de autenticación
+        if (error.response && error.response.status === 401) {
+            // Token expirado o inválido
+            authService.logout();
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
 );
 
 // Servicios de autenticación
@@ -122,7 +134,7 @@ export const authService = {
             };
         }
 
-        return api.post('/auth/register', userData);
+        return api.post('/doctors/register', userData);
     },
 
     login: async (credentials) => {
@@ -151,7 +163,7 @@ export const authService = {
             };
         }
 
-        return api.post('/auth/login', credentials);
+        return api.post('/doctors/auth/login', credentials);
     },
 
     logout: () => {
@@ -170,7 +182,20 @@ export const patientService = {
             };
         }
 
-        return api.get('/patients');
+        const response = await api.get('/patients');
+
+        return {
+            data: response.data.data.patients.map(patient => ({
+                id: patient.id,
+                name: patient.name,
+                lastName: patient.last_name,
+                email: patient.email,
+                age: patient.age,
+                height: patient.height,
+                weight: patient.weight,
+                birthDate: patient.created_at
+            }))
+        };
     },
 
     getPatientById: async (id) => {
@@ -282,8 +307,50 @@ export const prescriptionService = {
             return { data: newPrescription };
         }
 
-        return api.post('/prescriptions', prescriptionData);
-    },
+        try {
+            // 1. Crear la receta
+            const prescriptionPayload = {
+                patientId: prescriptionData.patientId,
+                diagnosis: prescriptionData.diagnosis,
+                notes: prescriptionData.notes || ''
+            };
+
+            const response = await api.post('/prescriptions', prescriptionPayload);
+            const newPrescription = response.data.data.prescription;
+
+            // 2. Añadir los medicamentos uno por uno
+            if (prescriptionData.medications && prescriptionData.medications.length > 0) {
+                const medicationPromises = prescriptionData.medications
+                    .filter(med => med.name.trim() !== '') // Filtrar medicamentos sin nombre
+                    .map(med => {
+                        const medicationPayload = {
+                            prescriptionId: newPrescription.id,
+                            name: med.name,
+                            dosage: med.dosage || '',
+                            frequency: med.frequency ? parseInt(med.frequency) : null,
+                            days: med.days ? parseInt(med.days) : null,
+                            administrationRoute: med.administrationRoute || '',
+                            instructions: med.instructions || ''
+                        };
+
+                        return api.post('/medications', medicationPayload);
+                    });
+
+                // Esperar a que todos los medicamentos se añadan
+                await Promise.all(medicationPromises);
+            }
+
+            // 3. Devolver la nueva receta con medicamentos
+            return {
+                data: {
+                    ...newPrescription,
+                    medications: prescriptionData.medications || []
+                }
+            };
+        } catch (error) {
+            console.error('Error creating prescription:', error);
+            throw error;
+        }    },
 
     getPrescriptions: async () => {
         if (USE_LOCAL_STORAGE) {
@@ -296,11 +363,44 @@ export const prescriptionService = {
         return api.get('/prescriptions');
     },
 
-    getPrescriptionById: async (id) => {
+    getPatientPrescriptions: async (patientId) => {
         if (USE_LOCAL_STORAGE) {
+            // Implementación localStorage (mantener para modo offline)
             const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
             const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
+            const patientPrescriptions = parsedPrescriptions.filter(p => p.patientId === patientId);
+            return { data: patientPrescriptions };
+        }
 
+        // Usando el endpoint correcto
+        try {
+            const response = await api.get(`/prescriptions/patient/${patientId}`);
+
+            // Transformar la respuesta al formato esperado
+            const apiPrescriptions = response.data.data.prescriptions || [];
+            return {
+                data: apiPrescriptions.map(prescription => ({
+                    id: prescription.id,
+                    patientId: prescription.patientId || patientId,
+                    diagnosis: prescription.diagnosis,
+                    notes: prescription.notes,
+                    date: prescription.createdAt,
+                    status: "active",
+                    medications: prescription.medications || []
+                }))
+            };
+        } catch (error) {
+            console.error('Error fetching prescriptions:', error);
+            // En caso de error, devolver un array vacío para evitar errores en el componente
+            return { data: [] };
+        }
+    },
+
+    getPrescriptionById: async (id) => {
+        if (USE_LOCAL_STORAGE) {
+            // Implementación localStorage (mantener para modo offline)
+            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
+            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
             const prescription = parsedPrescriptions.find(p => p.id === id);
 
             if (!prescription) {
@@ -310,20 +410,22 @@ export const prescriptionService = {
             return { data: prescription };
         }
 
-        return api.get(`/prescriptions/${id}`);
-    },
+        // Llamada a la API real
+        const response = await api.get(`/prescriptions/${id}`);
 
-    getPatientPrescriptions: async (patientId) => {
-        if (USE_LOCAL_STORAGE) {
-            const prescriptions = localStorage.getItem(`${PREFIX}prescriptions`);
-            const parsedPrescriptions = prescriptions ? JSON.parse(prescriptions) : [];
-
-            const patientPrescriptions = parsedPrescriptions.filter(p => p.patientId === patientId);
-
-            return { data: patientPrescriptions };
-        }
-
-        return api.get(`/prescriptions/patient/${patientId}`);
+        // Transformar la respuesta
+        const apiPrescription = response.data.data.prescription;
+        return {
+            data: {
+                id: apiPrescription.id,
+                patientId: apiPrescription.patientId,
+                diagnosis: apiPrescription.diagnosis,
+                notes: apiPrescription.notes,
+                date: apiPrescription.createdAt,
+                status: "active", // Asumiendo que todas son activas
+                medications: apiPrescription.medications || []
+            }
+        };
     },
 
     updatePrescription: async (id, prescriptionData) => {

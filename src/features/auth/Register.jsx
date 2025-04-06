@@ -68,7 +68,7 @@ const Register = () => {
                     isClosable: true,
                 });
 
-                login(response.data.user, response.data.token);
+                login(response.data, response.data.token);
             } catch (error) {
                 const errorMessage =
                     error.response?.data?.message || 'Error al registrarse. Inténtalo de nuevo.';

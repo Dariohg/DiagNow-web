@@ -1,16 +1,9 @@
+// src/features/patients/Dashboard.jsx (actualización parcial)
+
 import React, { useEffect, useState } from 'react';
 import {
-    Box,
-    Card,
-    CardBody,
-    Flex,
-    Grid,
-    Heading,
-    Text,
-    HStack,
-    VStack,
-    Spinner,
-    Center,
+    Box, Card, CardBody, Flex, Grid, Heading, Text, HStack, VStack,
+    Spinner, Center, useToast, Alert, AlertIcon, AlertTitle, AlertDescription
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
@@ -21,7 +14,9 @@ const Dashboard = () => {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [patients, setPatients] = useState([]);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const toast = useToast();
 
     useEffect(() => {
         fetchPatients();
@@ -30,17 +25,27 @@ const Dashboard = () => {
     const fetchPatients = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await patientService.getPatients();
             setPatients(response.data || []);
         } catch (error) {
             console.error('Error fetching patients:', error);
+            setError('No se pudieron cargar los pacientes. Por favor intenta más tarde.');
+
+            toast({
+                title: 'Error',
+                description: 'No se pudieron cargar los pacientes',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePatientClick = (patientId) => {
-        navigate(`/patients/${patientId}`);
+    const handlePatientClick = (patient) => {
+        navigate(`/patients/${patient.id}`, { state: { patient } });
     };
 
     if (loading) {
@@ -69,7 +74,15 @@ const Dashboard = () => {
 
                 <Heading size="md" mb={4}>Pacientes Registrados</Heading>
 
-                {patients.length > 0 ? (
+                {error && (
+                    <Alert status="error" mb={6} borderRadius="md">
+                        <AlertIcon />
+                        <AlertTitle>Error:</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
+                {!error && patients.length > 0 ? (
                     <Grid
                         templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
                         gap={6}
@@ -81,7 +94,7 @@ const Dashboard = () => {
                                 borderRadius="lg"
                                 overflow="hidden"
                                 _hover={{ transform: 'translateY(-5px)', transition: 'transform 0.3s', cursor: 'pointer' }}
-                                onClick={() => handlePatientClick(patient.id)}
+                                onClick={() => handlePatientClick(patient)}
                             >
                                 <CardBody>
                                     <VStack spacing={2} align="stretch">
@@ -116,7 +129,9 @@ const Dashboard = () => {
                 ) : (
                     <Card bg="gray.800" p={6}>
                         <Center flexDirection="column" py={8}>
-                            <Text color="gray.400">No hay pacientes registrados</Text>
+                            <Text color="gray.400">
+                                {error ? 'Error al cargar pacientes' : 'No hay pacientes registrados'}
+                            </Text>
                         </Center>
                     </Card>
                 )}

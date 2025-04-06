@@ -48,7 +48,8 @@ const NewPrescription = () => {
             dosage: '',
             administrationRoute: '',
             frequency: '',
-            days: ''
+            days: '',
+            instructions: ''
         }
     ]);
     const [isLoading, setIsLoading] = useState(true);
@@ -124,16 +125,31 @@ const NewPrescription = () => {
                         duration: 5000,
                         isClosable: true,
                     });
+                    setIsSaving(false);
                     return;
                 }
 
+                // Preparar medicamentos válidos (con al menos nombre)
+                const validMedications = medications
+                    .filter(med => med.name.trim() !== '')
+                    .map(med => ({
+                        name: med.name.trim(),
+                        dosage: med.dosage.trim(),
+                        frequency: med.frequency,
+                        days: med.days,
+                        administrationRoute: med.administrationRoute,
+                        instructions: '' // Podemos añadir este campo al formulario si es necesario
+                    }));
+
                 // Construir el objeto de receta
                 const prescriptionData = {
-                    ...values,
-                    medications: medications.filter(med => med.name.trim() !== ''),
+                    patientId: values.patientId,
+                    diagnosis: values.diagnosis,
+                    notes: values.notes,
+                    medications: validMedications
                 };
 
-                // En un entorno real, enviaríamos la receta al backend
+                // Enviar a la API
                 await prescriptionService.createPrescription(prescriptionData);
 
                 toast({
@@ -151,9 +167,13 @@ const NewPrescription = () => {
                 }
             } catch (error) {
                 console.error('Error creating prescription:', error);
+
+                const errorMessage = error.response?.data?.message ||
+                    'No se pudo guardar la receta. Por favor intenta nuevamente.';
+
                 toast({
                     title: 'Error',
-                    description: 'No se pudo guardar la receta',
+                    description: errorMessage,
                     status: 'error',
                     duration: 5000,
                     isClosable: true,
@@ -180,12 +200,13 @@ const NewPrescription = () => {
         setMedications([
             ...medications,
             {
-                id: Date.now(), // Usar timestamp como ID temporal
+                id: Date.now(),
                 name: '',
                 dosage: '',
                 administrationRoute: '',
                 frequency: '',
-                days: ''
+                days: '',
+                instructions: ''
             }
         ]);
     };
@@ -416,6 +437,16 @@ const NewPrescription = () => {
                                                     </NumberInput>
                                                 </FormControl>
                                             </SimpleGrid>
+                                            <FormControl mt={2}>
+                                                <FormLabel>Instrucciones</FormLabel>
+                                                <Textarea
+                                                    value={medication.instructions || ''}
+                                                    placeholder="Ej: Tomar después de las comidas"
+                                                    onChange={(e) => handleMedicationChange(medication.id, 'instructions', e.target.value)}
+                                                    size="sm"
+                                                    rows={2}
+                                                />
+                                            </FormControl>
                                         </Box>
                                     ))}
                                 </VStack>

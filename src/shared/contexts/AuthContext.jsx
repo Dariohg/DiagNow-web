@@ -52,8 +52,8 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (userData, authToken) => {
-        localStorage.setItem('token', authToken);
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('diagnow_token', authToken);
+        localStorage.setItem('diagnow_user', JSON.stringify(userData));
         setToken(authToken);
         setCurrentUser(userData);
         setIsAuthenticated(true);
