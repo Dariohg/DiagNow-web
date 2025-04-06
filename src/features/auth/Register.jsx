@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Box,
     Button,
-    Container,
+    Flex,
     FormControl,
     FormLabel,
     Heading,
@@ -15,7 +15,6 @@ import {
     InputGroup,
     InputRightElement,
     IconButton,
-    Image,
     HStack,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -24,6 +23,8 @@ import * as Yup from 'yup';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { authService } from '../../core/services/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
+import ResilientImage from "../../shared/components/ResilientImage.jsx";
+import logoImage from '../../assets/Diagnow-logo.png';
 
 const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -87,18 +88,29 @@ const Register = () => {
     });
 
     return (
-        <Container maxW="md" py={10}>
-            <VStack spacing={6} align="stretch">
-                <VStack spacing={2} align="center">
-                    <Box boxSize="100px" mb={2}>
-                        <Image src="/logo-placeholder.png" alt="DiagNow Logo" fallbackSrc="https://via.placeholder.com/100?text=DiagNow" />
-                    </Box>
-                    <Heading color="medicine.blue" size="xl">DiagNow</Heading>
-                    <Text color="gray.400">Registro de Médicos</Text>
-                </VStack>
+        <Flex
+            direction="column"
+            align="center"
+            justify="flex-start"
+            minHeight="100vh"
+            pt={{ base: "3vh", md: "5vh" }}
+            bg="gray.900"
+            px={4}
+        >
+            <Box width="180px" mb={4}>
+                <ResilientImage
+                    src="/logo-placeholder.png"
+                    alt="DiagNow Logo"
+                    fallbackSrc={logoImage}
+                    width="100%"
+                />
+            </Box>
 
+            <Text color="gray.400" mb={6}>Registro de Médicos</Text>
+
+            <Box maxW="500px" width="100%">
                 <Box as="form" onSubmit={formik.handleSubmit}>
-                    <VStack spacing={4} align="stretch">
+                    <VStack spacing={5} align="stretch">
                         <HStack spacing={4}>
                             <FormControl isInvalid={formik.touched.name && formik.errors.name}>
                                 <FormLabel>Nombre</FormLabel>
@@ -108,6 +120,7 @@ const Register = () => {
                                     value={formik.values.name}
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
+                                    size="lg"
                                 />
                                 <FormErrorMessage>{formik.errors.name}</FormErrorMessage>
                             </FormControl>
@@ -120,6 +133,7 @@ const Register = () => {
                                     value={formik.values.lastName}
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
+                                    size="lg"
                                 />
                                 <FormErrorMessage>{formik.errors.lastName}</FormErrorMessage>
                             </FormControl>
@@ -134,13 +148,14 @@ const Register = () => {
                                 value={formik.values.email}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
+                                size="lg"
                             />
                             <FormErrorMessage>{formik.errors.email}</FormErrorMessage>
                         </FormControl>
 
                         <FormControl isInvalid={formik.touched.password && formik.errors.password}>
                             <FormLabel>Contraseña</FormLabel>
-                            <InputGroup>
+                            <InputGroup size="lg">
                                 <Input
                                     name="password"
                                     type={showPassword ? 'text' : 'password'}
@@ -164,7 +179,7 @@ const Register = () => {
 
                         <FormControl isInvalid={formik.touched.confirmPassword && formik.errors.confirmPassword}>
                             <FormLabel>Confirmar contraseña</FormLabel>
-                            <InputGroup>
+                            <InputGroup size="lg">
                                 <Input
                                     name="confirmPassword"
                                     type={showConfirmPassword ? 'text' : 'password'}
@@ -194,20 +209,24 @@ const Register = () => {
                             loadingText="Registrando..."
                             w="full"
                             mt={4}
+                            colorScheme="blue"
+                            height="48px"
                         >
                             Registrarme
                         </Button>
                     </VStack>
                 </Box>
 
-                <Text align="center">
-                    ¿Ya tienes una cuenta?{' '}
-                    <Link as={RouterLink} to="/login" color="brand.500">
-                        Inicia sesión
-                    </Link>
-                </Text>
-            </VStack>
-        </Container>
+                <Box mt={6} textAlign="center">
+                    <Text>
+                        ¿Ya tienes una cuenta?{' '}
+                        <Link as={RouterLink} to="/login" color="blue.400">
+                            Inicia sesión
+                        </Link>
+                    </Text>
+                </Box>
+            </Box>
+        </Flex>
     );
 };
 

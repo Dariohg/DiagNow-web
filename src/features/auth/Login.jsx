@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Box,
     Button,
-    Container,
+    Flex,
     FormControl,
     FormLabel,
     Heading,
@@ -15,7 +15,6 @@ import {
     InputGroup,
     InputRightElement,
     IconButton,
-    Image,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useFormik } from 'formik';
@@ -23,6 +22,8 @@ import * as Yup from 'yup';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { authService } from '../../core/services/api';
 import { useAuth } from '../../shared/contexts/AuthContext';
+import ResilientImage from "../../shared/components/ResilientImage.jsx";
+import logoImage from '../../assets/Diagnow-logo.png';
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -75,18 +76,29 @@ const Login = () => {
     });
 
     return (
-        <Container maxW="md" py={12}>
-            <VStack spacing={6} align="stretch">
-                <VStack spacing={2} align="center">
-                    <Box boxSize="100px" mb={2}>
-                        <Image src="/logo-placeholder.png" alt="DiagNow Logo" fallbackSrc="https://via.placeholder.com/100?text=DiagNow" />
-                    </Box>
-                    <Heading color="medicine.blue" size="xl">DiagNow</Heading>
-                    <Text color="gray.400">Acceso para Médicos</Text>
-                </VStack>
+        <Flex
+            direction="column"
+            align="center"
+            justify="flex-start"
+            minHeight="100vh"
+            pt={{ base: "5vh", md: "8vh" }}
+            bg="gray.900"
+            px={4}
+        >
+            <Box width="220px" mb={6}>
+                <ResilientImage
+                    src="/logo-placeholder.png"
+                    alt="DiagNow Logo"
+                    fallbackSrc={logoImage}
+                    width="100%"
+                />
+            </Box>
 
+            <Text color="gray.400" mb={8}>Acceso para Médicos</Text>
+
+            <Box maxW="400px" width="100%">
                 <Box as="form" onSubmit={formik.handleSubmit}>
-                    <VStack spacing={4} align="stretch">
+                    <VStack spacing={5} align="stretch">
                         <FormControl isInvalid={formik.touched.email && formik.errors.email}>
                             <FormLabel>Correo electrónico</FormLabel>
                             <Input
@@ -96,13 +108,14 @@ const Login = () => {
                                 value={formik.values.email}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
+                                size="lg"
                             />
                             <FormErrorMessage>{formik.errors.email}</FormErrorMessage>
                         </FormControl>
 
                         <FormControl isInvalid={formik.touched.password && formik.errors.password}>
                             <FormLabel>Contraseña</FormLabel>
-                            <InputGroup>
+                            <InputGroup size="lg">
                                 <Input
                                     name="password"
                                     type={showPassword ? 'text' : 'password'}
@@ -132,20 +145,24 @@ const Login = () => {
                             loadingText="Iniciando sesión..."
                             w="full"
                             mt={4}
+                            colorScheme="blue"
+                            height="48px"
                         >
                             Iniciar sesión
                         </Button>
                     </VStack>
                 </Box>
 
-                <Text align="center">
-                    ¿No tienes una cuenta?{' '}
-                    <Link as={RouterLink} to="/register" color="brand.500">
-                        Regístrate
-                    </Link>
-                </Text>
-            </VStack>
-        </Container>
+                <Box mt={6} textAlign="center">
+                    <Text>
+                        ¿No tienes una cuenta?{' '}
+                        <Link as={RouterLink} to="/register" color="blue.400">
+                            Regístrate
+                        </Link>
+                    </Text>
+                </Box>
+            </Box>
+        </Flex>
     );
 };
 

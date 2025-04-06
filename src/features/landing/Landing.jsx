@@ -16,6 +16,33 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { FiUser, FiFileText, FiClock, FiShield } from 'react-icons/fi';
+import dashboardImage from '../../assets/dashboard.png';
+import logoImage from '../../assets/Diagnow-logo.png';
+
+const LogoSvg = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="100%" height="100%">
+        <rect width="40" height="40" fill="#0064FF" />
+        <text x="20" y="25" fontSize="20" textAnchor="middle" fill="white" fontWeight="bold">D</text>
+    </svg>
+);
+
+// Componente de imagen con fallback integrado
+const SafeImage = ({ src, alt, fallbackComponent: FallbackComponent = LogoSvg, ...props }) => {
+    const [hasError, setHasError] = React.useState(false);
+
+    if (hasError) {
+        return <Box {...props}><FallbackComponent /></Box>;
+    }
+
+    return (
+        <Image
+            src={src}
+            alt={alt}
+            onError={() => setHasError(true)}
+            {...props}
+        />
+    );
+};
 
 const Feature = ({ icon, title, text }) => {
     return (
@@ -56,10 +83,14 @@ const Landing = () => {
                 <Container maxW="container.xl" py={4}>
                     <Flex justify="space-between" align="center">
                         <HStack spacing={2}>
-                            <Box boxSize="40px">
-                                <Image src="/logo-placeholder.png" alt="DiagNow Logo" fallbackSrc="https://via.placeholder.com/40?text=D" />
+                            <Box width="150px" height="auto">
+                                <Image
+                                    src={logoImage}
+                                    alt="DiagNow Logo"
+                                    width="100%"
+                                    objectFit="contain"
+                                />
                             </Box>
-                            <Heading size="md" color="medicine.blue">DiagNow</Heading>
                         </HStack>
                         <HStack spacing={4}>
                             <Link as={RouterLink} to="/login">
@@ -131,7 +162,7 @@ const Landing = () => {
                         {isDesktop && (
                             <Box flex={1} maxW="50%">
                                 <Image
-                                    src="https://via.placeholder.com/700x500?text=Doctor+Dashboard"
+                                    src={dashboardImage}
                                     alt="Dashboard DiagNow"
                                     boxShadow="xl"
                                     borderRadius="lg"
@@ -226,11 +257,15 @@ const Landing = () => {
                         textAlign={{ base: 'center', md: 'left' }}
                     >
                         <VStack align={{ base: 'center', md: 'start' }} mb={{ base: 6, md: 0 }}>
-                            <HStack>
-                                <Box boxSize="30px">
-                                    <Image src="/logo-placeholder.png" alt="DiagNow Logo" fallbackSrc="https://via.placeholder.com/30?text=D" />
+                            <HStack spacing={2}>
+                                <Box width="150px" height="auto">
+                                    <Image
+                                        src={logoImage}
+                                        alt="DiagNow Logo"
+                                        width="100%"
+                                        objectFit="contain"
+                                    />
                                 </Box>
-                                <Heading size="sm" color="medicine.blue">DiagNow</Heading>
                             </HStack>
                             <Text fontSize="sm" color="gray.500">
                                 © {new Date().getFullYear()} DiagNow. Todos los derechos reservados.
